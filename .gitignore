@@ -9,8 +9,9 @@ __pycache__/
 # Local data (download with scripts/01_download_data.py)
 data/raw/
 
-# SQLite database (build with scripts/02_load_database.py)
+# SQLite database (pre-built scouting.db is committed for Streamlit Cloud)
 database/*.db
+!database/scouting.db
 
 # Generated reports (regenerate with scripts/04–05)
 outputs/

@@ -7,6 +7,10 @@ Run:
 
 from __future__ import annotations
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
@@ -201,48 +205,57 @@ def render_brief(team: str, data: dict) -> None:
 
 
 def main() -> None:
-    if not database_ready():
-        st.warning(
-            "First launch: downloading StatsBomb data and building the database. "
-            "This takes about 5–10 minutes on Streamlit Cloud."
+    try:
+        if not database_ready():
+            st.warning(
+                "Database missing — downloading StatsBomb data. "
+                "This can take several minutes and may fail on Streamlit Cloud. "
+                "The repo should include `database/scouting.db` for deployment."
+            )
+            with st.spinner("Building database from StatsBomb Open Data..."):
+                ensure_database()
+
+        teams = load_teams()
+        if not teams:
+            st.error("No teams found in the database. Check that `database/scouting.db` is present.")
+            st.stop()
+
+        default_index = teams.index(DEFAULT_TEAM) if DEFAULT_TEAM in teams else 0
+
+        st.sidebar.title("Soccer Scouting")
+        st.sidebar.caption("Premier League 2015/16 | StatsBomb Open Data")
+
+        team = st.sidebar.selectbox("Opposition team", teams, index=default_index)
+        page = st.sidebar.radio(
+            "Navigate",
+            ["Overview", "Tactical Analysis", "Set Pieces", "Opposition Brief"],
         )
-        with st.spinner("Building database from StatsBomb Open Data..."):
-            ensure_database()
 
-    teams = load_teams()
-    default_index = teams.index(DEFAULT_TEAM) if DEFAULT_TEAM in teams else 0
+        st.title("Opposition Scouting Dashboard")
+        st.markdown(f"### Target: **{team}**")
 
-    st.sidebar.title("Soccer Scouting")
-    st.sidebar.caption("Premier League 2015/16 | StatsBomb Open Data")
+        with st.spinner(f"Loading {team} data..."):
+            data = load_team_data(team)
+            data["ppda_rank"] = load_ppda_ranking()
 
-    team = st.sidebar.selectbox("Opposition team", teams, index=default_index)
-    page = st.sidebar.radio(
-        "Navigate",
-        ["Overview", "Tactical Analysis", "Set Pieces", "Opposition Brief"],
-    )
+        if page == "Overview":
+            render_overview(team, data)
+        elif page == "Tactical Analysis":
+            render_tactical(team, data)
+        elif page == "Set Pieces":
+            render_set_pieces(team, data)
+        else:
+            data["brief"] = load_brief(team)
+            render_brief(team, data)
 
-    st.title("Opposition Scouting Dashboard")
-    st.markdown(f"### Target: **{team}**")
-
-    with st.spinner(f"Loading {team} data..."):
-        data = load_team_data(team)
-        data["ppda_rank"] = load_ppda_ranking()
-
-    if page == "Overview":
-        render_overview(team, data)
-    elif page == "Tactical Analysis":
-        render_tactical(team, data)
-    elif page == "Set Pieces":
-        render_set_pieces(team, data)
-    else:
-        data["brief"] = load_brief(team)
-        render_brief(team, data)
-
-    st.sidebar.markdown("---")
-    st.sidebar.markdown(
-        "**Portfolio project**  \n"
-        "Steps 1–4: Data pipeline → Tactical metrics → Set pieces → Dashboard"
-    )
+        st.sidebar.markdown("---")
+        st.sidebar.markdown(
+            "**Portfolio project**  \n"
+            "Steps 1–4: Data pipeline → Tactical metrics → Set pieces → Dashboard"
+        )
+    except Exception as exc:
+        st.error("The app hit an error while starting or loading data.")
+        st.exception(exc)
 
 
 if __name__ == "__main__":

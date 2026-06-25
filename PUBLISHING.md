@@ -19,7 +19,7 @@ Create a new repository on GitHub (public, no README). Then:
 
 ```powershell
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/soccer-scouting.git
+git remote add origin https://github.com/Soccer20smith-creator/soccer-scouting.git
 git push -u origin main
 ```
 
@@ -100,7 +100,7 @@ Export PPDA/xG tables from the notebook and upload as a separate Kaggle dataset 
 
 1. Go to https://share.streamlit.io/
 2. **New app**
-3. Repository: `YOUR_USERNAME/soccer-scouting`
+3. Repository: `Soccer20smith-creator/soccer-scouting`
 4. Branch: `main`
 5. Main file path: `app.py`
 6. **Deploy**
