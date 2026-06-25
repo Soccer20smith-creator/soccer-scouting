@@ -17,7 +17,6 @@ import streamlit as st
 
 from config import DEFAULT_TEAM
 from src.bootstrap import database_ready, ensure_database
-from src.brief import build_opposition_brief
 from src.db import get_engine
 from src.metrics import (
     final_third_entries,
@@ -27,13 +26,6 @@ from src.metrics import (
     xg_season_totals,
     xg_summary,
     zone_summary,
-)
-from src.plots import (
-    create_corner_delivery_fig,
-    create_delivery_zones_fig,
-    create_set_piece_balance_fig,
-    create_shot_map_fig,
-    create_zone_fig,
 )
 from src.set_pieces import (
     CORNER_PATTERN,
@@ -109,6 +101,8 @@ def load_team_data(team: str) -> dict:
 
 @st.cache_data(show_spinner=False)
 def load_brief(team: str) -> str:
+    from src.brief import build_opposition_brief
+
     return build_opposition_brief(team, get_engine())
 
 
@@ -140,6 +134,8 @@ def render_overview(team: str, data: dict) -> None:
 
 
 def render_tactical(team: str, data: dict) -> None:
+    from src.plots import create_shot_map_fig, create_zone_fig
+
     st.subheader("Tactical Profile")
 
     col_left, col_right = st.columns([1.3, 1])
@@ -163,6 +159,12 @@ def render_tactical(team: str, data: dict) -> None:
 
 
 def render_set_pieces(team: str, data: dict) -> None:
+    from src.plots import (
+        create_corner_delivery_fig,
+        create_delivery_zones_fig,
+        create_set_piece_balance_fig,
+    )
+
     st.subheader("Set-Piece Analysis")
 
     col_left, col_right = st.columns(2)
@@ -236,7 +238,10 @@ def main() -> None:
 
         with st.spinner(f"Loading {team} data..."):
             data = load_team_data(team)
-            data["ppda_rank"] = load_ppda_ranking()
+            if page in {"Overview", "Tactical Analysis"}:
+                data["ppda_rank"] = load_ppda_ranking()
+            else:
+                data["ppda_rank"] = pd.DataFrame()
 
         if page == "Overview":
             render_overview(team, data)
@@ -258,5 +263,4 @@ def main() -> None:
         st.exception(exc)
 
 
-if __name__ == "__main__":
-    main()
+main()

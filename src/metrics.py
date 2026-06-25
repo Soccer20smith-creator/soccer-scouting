@@ -183,12 +183,35 @@ def ppda_for_match(match_events: pd.DataFrame, team: str) -> float | None:
     return len(opponent_passes) / len(team_actions)
 
 
+def _load_ppda_events(engine: Engine, match_ids: list[int] | None = None) -> pd.DataFrame:
+    type_list = ", ".join(f"'{event_type}'" for event_type in (*DEFENSIVE_ACTIONS, "Pass"))
+    if match_ids:
+        placeholders = ", ".join(str(match_id) for match_id in match_ids)
+        query = f"""
+            SELECT match_id, team_name, event_type
+            FROM events
+            WHERE match_id IN ({placeholders})
+              AND event_type IN ({type_list})
+        """
+    else:
+        query = f"""
+            SELECT match_id, team_name, event_type
+            FROM events
+            WHERE event_type IN ({type_list})
+        """
+    return pd.read_sql(query, engine)
+
+
 def ppda_summary(engine: Engine, team: str) -> dict[str, float]:
     match_ids = get_team_match_ids(engine, team)
+    if not match_ids:
+        return {"ppda": 0.0, "matches": 0}
+
+    events = _load_ppda_events(engine, match_ids)
     values: list[float] = []
 
     for match_id in match_ids:
-        match_events = load_match_events(engine, [match_id])
+        match_events = events[events["match_id"] == match_id]
         value = ppda_for_match(match_events, team)
         if value is not None:
             values.append(value)
@@ -204,16 +227,25 @@ def ppda_summary(engine: Engine, team: str) -> dict[str, float]:
 
 def league_ppda_ranking(engine: Engine) -> pd.DataFrame:
     teams = pd.read_sql("SELECT DISTINCT team_name FROM events ORDER BY team_name", engine)
+    events = _load_ppda_events(engine)
     rows = []
+
     for team in teams["team_name"]:
-        summary = ppda_summary(engine, team)
+        match_ids = get_team_match_ids(engine, team)
+        values: list[float] = []
+        for match_id in match_ids:
+            match_events = events[events["match_id"] == match_id]
+            value = ppda_for_match(match_events, team)
+            if value is not None:
+                values.append(value)
         rows.append(
             {
                 "team": team,
-                "ppda": summary["ppda"],
-                "matches": summary["matches"],
+                "ppda": round(sum(values) / len(values), 2) if values else 0.0,
+                "matches": len(values),
             }
         )
+
     frame = pd.DataFrame(rows).sort_values("ppda")
     frame["press_rank"] = range(1, len(frame) + 1)
     return frame.reset_index(drop=True)
