@@ -1,0 +1,7 @@
+pandas>=2.2.0
+requests>=2.31.0
+sqlalchemy>=2.0.0
+python-dotenv>=1.0.0
+mplsoccer>=1.4.0
+matplotlib>=3.8.0
+streamlit>=1.32.0

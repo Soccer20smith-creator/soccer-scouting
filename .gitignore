@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Local data (download with scripts/01_download_data.py)
+data/raw/
+
+# SQLite database (build with scripts/02_load_database.py)
+database/*.db
+
+# Generated reports (regenerate with scripts/04–05)
+outputs/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.kaggle/

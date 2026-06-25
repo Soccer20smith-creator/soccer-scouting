@@ -1,0 +1,13 @@
+{
+  "id": "YOUR_KAGGLE_USERNAME/soccer-scouting-pl-2015-16",
+  "title": "Soccer Scouting — PL 2015/16 Tactical Analysis",
+  "code_file": "soccer_scouting_analysis.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": []
+}
